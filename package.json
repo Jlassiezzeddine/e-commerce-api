@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "A scalable e-commerce API built with NestJS and MongoDB",
   "main": "dist/main.js",
+  "lint-staged": {
+    "*.{ts,js,json}": [
+      "biome check --write"
+    ]
+  },
   "scripts": {
     "build": "nest build",
     "format": "biome format --write .",
@@ -16,9 +21,13 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
+    "lint-staged": "lint-staged",
+    "typecheck": "tsc --noEmit",
+    "commitlint": "commitlint --edit",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "ts-node -r tsconfig-paths/register scripts/seed.ts"
+    "seed": "ts-node -r tsconfig-paths/register scripts/seed.ts",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -56,6 +65,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.4",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/testing": "^11.1.8",
@@ -67,7 +78,9 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^6.0.3",
+    "husky": "^9.1.7",
     "jest": "^30.2.0",
+    "lint-staged": "^16.2.6",
     "mongodb-memory-server": "^10.3.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.5",
