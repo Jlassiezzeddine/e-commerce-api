@@ -17,12 +17,17 @@ import type { Request as ExpressRequest, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { UsersService } from '../users/users.service';
-import { AuthService, type SocialLoginResponse } from './auth.service';
+import type { UsersService } from '../users/users.service';
+import type { AuthService, SocialLoginResponse } from './auth.service';
 import { AdminOnly } from './decorators/auth.decorators';
-import { AuthResponseDto, LoginDto, RefreshTokenDto, RegisterDto } from './dto/auth.dto';
-import { SendVerificationEmailDto, VerifyEmailDto } from './dto/email-verification.dto';
 import {
+  AuthResponseDto,
+  type LoginDto,
+  type RefreshTokenDto,
+  type RegisterDto,
+} from './dto/auth.dto';
+import type { SendVerificationEmailDto, VerifyEmailDto } from './dto/email-verification.dto';
+import type {
   OtpVerificationFailureDto,
   OtpVerificationSuccessDto,
   PasswordResetResponseDto,
@@ -32,7 +37,7 @@ import {
   VerifyOtpDto,
 } from './dto/password-reset.dto';
 import { RolesGuard } from './guards/roles.guard';
-import { TokenCleanupService } from './services/token-cleanup/token-cleanup.service';
+import type { TokenCleanupService } from './services/token-cleanup/token-cleanup.service';
 
 @ApiTags('auth')
 @Controller('auth')

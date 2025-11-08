@@ -1,19 +1,21 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Schema as MongooseSchema } from 'mongoose';
-import { PaginatedResponseDto } from '../../common/dto/pagination.dto';
-import { DiscountRepository } from '../../database/repositories/discount.repository';
-import { ProductRepository } from '../../database/repositories/product.repository';
-import { ProductDiscountRepository } from '../../database/repositories/product-discount.repository';
+import { Injectable } from '@nestjs/common';
+import type { Schema as MongooseSchema } from 'mongoose';
+import type { PaginatedResponseDto } from '../../common/dto/pagination.dto';
+import { DatabaseException } from '../../common/exceptions/database.exception';
+import { ErrorCode } from '../../common/exceptions/error-codes.enum';
+import type { DiscountRepository } from '../../database/repositories/discount.repository';
+import type { ProductRepository } from '../../database/repositories/product.repository';
+import type { ProductDiscountRepository } from '../../database/repositories/product-discount.repository';
 import { DiscountType } from '../../database/schemas/discount.schema';
-import { Product } from '../../database/schemas/product.schema';
-import { CreateProductDto } from './dto/create-product.dto';
-import { ProductResponseDto } from './dto/product-response.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import type { Product } from '../../database/schemas/product.schema';
+import type { CreateProductDto } from './dto/create-product.dto';
+import type { ProductResponseDto } from './dto/product-response.dto';
+import type { UpdateProductDto } from './dto/update-product.dto';
+import {
+  ProductConflictException,
+  ProductNotFoundException,
+  ProductOperationException,
+} from './exceptions/product.exceptions';
 
 @Injectable()
 export class ProductsService {
@@ -24,22 +26,32 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const existingBySku = await this.productRepository.findBySku(createProductDto.sku);
-    if (existingBySku) {
-      throw new ConflictException('Product with this SKU already exists');
-    }
+    try {
+      const existingBySku = await this.productRepository.findBySku(createProductDto.sku);
+      if (existingBySku) {
+        throw new ProductConflictException('sku', createProductDto.sku);
+      }
 
-    const existingBySlug = await this.productRepository.findBySlug(createProductDto.slug);
-    if (existingBySlug) {
-      throw new ConflictException('Product with this slug already exists');
-    }
+      const existingBySlug = await this.productRepository.findBySlug(createProductDto.slug);
+      if (existingBySlug) {
+        throw new ProductConflictException('slug', createProductDto.slug);
+      }
 
-    return this.productRepository.create({
-      ...createProductDto,
-      slug: createProductDto.slug.toLowerCase(),
-      sku: createProductDto.sku.toUpperCase(),
-      categoryId: createProductDto.categoryId as unknown as MongooseSchema.Types.ObjectId,
-    });
+      return await this.productRepository.create({
+        ...createProductDto,
+        slug: createProductDto.slug.toLowerCase(),
+        sku: createProductDto.sku.toUpperCase(),
+        categoryId: createProductDto.categoryId as unknown as MongooseSchema.Types.ObjectId,
+      });
+    } catch (error) {
+      if (error instanceof ProductConflictException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to create product', ErrorCode.DB_004, {
+        operation: 'create',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   async findAll(
@@ -74,19 +86,46 @@ export class ProductsService {
   }
 
   async findOne(id: string): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findById(id);
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+    try {
+      const product = await this.productRepository.findById(id);
+      if (!product) {
+        throw new ProductNotFoundException(id);
+      }
+      return this.calculateProductPricing(product);
+    } catch (error) {
+      if (error instanceof ProductNotFoundException) {
+        throw error;
+      }
+      // Handle CastError (invalid ObjectId format) as ProductNotFoundException
+      if (
+        error instanceof Error &&
+        (error.name === 'CastError' || error.message?.includes('Cast to ObjectId'))
+      ) {
+        throw new ProductNotFoundException(id);
+      }
+      throw new DatabaseException('Failed to find product', ErrorCode.DB_004, {
+        productId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-    return this.calculateProductPricing(product);
   }
 
   async findBySlug(slug: string): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findBySlug(slug);
-    if (!product) {
-      throw new NotFoundException(`Product with slug ${slug} not found`);
+    try {
+      const product = await this.productRepository.findBySlug(slug);
+      if (!product) {
+        throw new ProductNotFoundException(slug);
+      }
+      return this.calculateProductPricing(product);
+    } catch (error) {
+      if (error instanceof ProductNotFoundException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to find product by slug', ErrorCode.DB_004, {
+        slug,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-    return this.calculateProductPricing(product);
   }
 
   async findByCategory(categoryId: string): Promise<ProductResponseDto[]> {
@@ -119,36 +158,60 @@ export class ProductsService {
   }
 
   async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
-    const product = await this.productRepository.findById(id);
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
-
-    if (updateProductDto.slug) {
-      const existingBySlug = await this.productRepository.findBySlug(updateProductDto.slug);
-      if (existingBySlug && existingBySlug.id !== id) {
-        throw new ConflictException('Product with this slug already exists');
+    try {
+      const product = await this.productRepository.findById(id);
+      if (!product) {
+        throw new ProductNotFoundException(id);
       }
-      updateProductDto.slug = updateProductDto.slug.toLowerCase();
-    }
 
-    const updated = await this.productRepository.update(id, updateProductDto);
-    if (!updated) {
-      throw new BadRequestException('Failed to update product');
-    }
+      if (updateProductDto.slug) {
+        const existingBySlug = await this.productRepository.findBySlug(updateProductDto.slug);
+        if (existingBySlug && existingBySlug.id !== id) {
+          throw new ProductConflictException('slug', updateProductDto.slug);
+        }
+        updateProductDto.slug = updateProductDto.slug.toLowerCase();
+      }
 
-    return updated;
+      const updated = await this.productRepository.update(id, updateProductDto);
+      if (!updated) {
+        throw new ProductOperationException('update', { productId: id });
+      }
+
+      return updated;
+    } catch (error) {
+      if (
+        error instanceof ProductNotFoundException ||
+        error instanceof ProductConflictException ||
+        error instanceof ProductOperationException
+      ) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to update product', ErrorCode.DB_004, {
+        productId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   async remove(id: string): Promise<void> {
-    const product = await this.productRepository.findById(id);
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
+    try {
+      const product = await this.productRepository.findById(id);
+      if (!product) {
+        throw new ProductNotFoundException(id);
+      }
 
-    const deleted = await this.productRepository.delete(id);
-    if (!deleted) {
-      throw new BadRequestException('Failed to delete product');
+      const deleted = await this.productRepository.delete(id);
+      if (!deleted) {
+        throw new ProductOperationException('delete', { productId: id });
+      }
+    } catch (error) {
+      if (error instanceof ProductNotFoundException || error instanceof ProductOperationException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to delete product', ErrorCode.DB_004, {
+        productId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

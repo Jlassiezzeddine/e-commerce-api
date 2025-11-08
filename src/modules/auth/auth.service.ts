@@ -1,16 +1,21 @@
 import { randomBytes } from 'node:crypto';
-import { BadRequestException, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
+import type { JwtService } from '@nestjs/jwt';
 import type { Response } from 'express';
-import { EmailService } from '../../common/services/email.service';
-import { OTPService } from '../../common/services/otp.service';
-import { PasswordService } from '../../common/services/password.service';
-import { UserRepository } from '../../database/repositories/user.repository';
-import type { User } from '../../database/schemas/user.schema';
-import { UserRole } from '../../database/schemas/user.schema';
+import type { EmailService } from '../../common/services/email.service';
+import type { OTPService } from '../../common/services/otp.service';
+import type { PasswordService } from '../../common/services/password.service';
+import type { UserRepository } from '../../database/repositories/user.repository';
+import { type User, UserRole } from '../../database/schemas/user.schema';
 import type { UserResponseDto } from '../users/dto/user-response.dto';
-import { UsersService } from '../users/users.service';
+import type { UsersService } from '../users/users.service';
 import type { AuthResponseDto, LoginDto, RegisterDto, TokenPayloadDto } from './dto/auth.dto';
 import type {
   OtpVerificationFailureDto,
@@ -54,7 +59,7 @@ export interface SocialLoginResponse {
 }
 
 import type { IAuthRepository } from './repository/auth.repository.interface';
-import { JwtAuthService } from './services/jwt/jwt.service';
+import type { JwtAuthService } from './services/jwt/jwt.service';
 
 @Injectable()
 export class AuthService {

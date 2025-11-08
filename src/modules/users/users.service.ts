@@ -1,17 +1,19 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import type { PaginatedResponseDto } from '../../common/dto/pagination.dto';
-import { UserRepository } from '../../database/repositories/user.repository';
+import { DatabaseException } from '../../common/exceptions/database.exception';
+import { ErrorCode } from '../../common/exceptions/error-codes.enum';
+import type { UserRepository } from '../../database/repositories/user.repository';
 import type { User } from '../../database/schemas/user.schema';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { UpdateUserDto } from './dto/update-user.dto';
 import type { UserResponseDto } from './dto/user-response.dto';
+import {
+  UserConflictException,
+  UserNotFoundException,
+  UserOperationException,
+} from './exceptions/user.exceptions';
 
 @Injectable()
 export class UsersService {
@@ -25,20 +27,30 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.userRepository.findByEmail(createUserDto.email);
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+    try {
+      const existingUser = await this.userRepository.findByEmail(createUserDto.email);
+      if (existingUser) {
+        throw new UserConflictException('email', createUserDto.email);
+      }
+
+      const hashedPassword = await bcrypt.hash(createUserDto.password, this.saltRounds);
+
+      const user = await this.userRepository.create({
+        ...createUserDto,
+        password: hashedPassword,
+        email: createUserDto.email.toLowerCase(),
+      });
+
+      return user;
+    } catch (error) {
+      if (error instanceof UserConflictException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to create user', ErrorCode.DB_004, {
+        operation: 'create',
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-
-    const hashedPassword = await bcrypt.hash(createUserDto.password, this.saltRounds);
-
-    const user = await this.userRepository.create({
-      ...createUserDto,
-      password: hashedPassword,
-      email: createUserDto.email.toLowerCase(),
-    });
-
-    return user;
   }
 
   async findAll(
@@ -69,11 +81,28 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userRepository.findById(id);
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+    try {
+      const user = await this.userRepository.findById(id);
+      if (!user) {
+        throw new UserNotFoundException(id, 'id');
+      }
+      return user;
+    } catch (error) {
+      if (error instanceof UserNotFoundException) {
+        throw error;
+      }
+      // Handle CastError (invalid ObjectId format) as UserNotFoundException
+      if (
+        error instanceof Error &&
+        (error.name === 'CastError' || error.message?.includes('Cast to ObjectId'))
+      ) {
+        throw new UserNotFoundException(id, 'id');
+      }
+      throw new DatabaseException('Failed to find user', ErrorCode.DB_004, {
+        userId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-    return user;
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -81,25 +110,45 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    await this.findOne(id); // Verify user exists
+    try {
+      await this.findOne(id); // Verify user exists
 
-    if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, this.saltRounds);
+      if (updateUserDto.password) {
+        updateUserDto.password = await bcrypt.hash(updateUserDto.password, this.saltRounds);
+      }
+
+      const updated = await this.userRepository.update(id, updateUserDto);
+      if (!updated) {
+        throw new UserOperationException('update', { userId: id });
+      }
+
+      return updated;
+    } catch (error) {
+      if (error instanceof UserNotFoundException || error instanceof UserOperationException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to update user', ErrorCode.DB_004, {
+        userId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-
-    const updated = await this.userRepository.update(id, updateUserDto);
-    if (!updated) {
-      throw new BadRequestException('Failed to update user');
-    }
-
-    return updated;
   }
 
   async remove(id: string): Promise<void> {
-    const _user = await this.findOne(id);
-    const deleted = await this.userRepository.delete(id);
-    if (!deleted) {
-      throw new BadRequestException('Failed to delete user');
+    try {
+      await this.findOne(id);
+      const deleted = await this.userRepository.delete(id);
+      if (!deleted) {
+        throw new UserOperationException('delete', { userId: id });
+      }
+    } catch (error) {
+      if (error instanceof UserNotFoundException || error instanceof UserOperationException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to delete user', ErrorCode.DB_004, {
+        userId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

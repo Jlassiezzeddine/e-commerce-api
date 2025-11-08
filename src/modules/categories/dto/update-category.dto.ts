@@ -21,10 +21,4 @@ export class UpdateCategoryDto {
   @IsOptional()
   @MaxLength(500)
   description?: string;
-
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean;
 }
-

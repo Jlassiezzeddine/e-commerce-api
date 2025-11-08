@@ -1,17 +1,19 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { PaginatedResponseDto } from '../../common/dto/pagination.dto';
-import { DiscountRepository } from '../../database/repositories/discount.repository';
-import { ProductDiscountRepository } from '../../database/repositories/product-discount.repository';
+import { DatabaseException } from '../../common/exceptions/database.exception';
+import { ErrorCode } from '../../common/exceptions/error-codes.enum';
+import type { DiscountRepository } from '../../database/repositories/discount.repository';
+import type { ProductDiscountRepository } from '../../database/repositories/product-discount.repository';
 import type { Discount } from '../../database/schemas/discount.schema';
 import type { CreateDiscountDto } from './dto/create-discount.dto';
 import type { DiscountResponseDto } from './dto/discount-response.dto';
 import type { LinkDiscountDto } from './dto/link-discount.dto';
 import type { UpdateDiscountDto } from './dto/update-discount.dto';
+import {
+  DiscountNotFoundException,
+  DiscountOperationException,
+  DiscountValidationException,
+} from './exceptions/discount.exceptions';
 
 @Injectable()
 export class DiscountsService {
@@ -21,26 +23,42 @@ export class DiscountsService {
   ) {}
 
   async create(createDiscountDto: CreateDiscountDto): Promise<Discount> {
-    if (createDiscountDto.code) {
-      const existing = await this.discountRepository.findByCode(createDiscountDto.code);
-      if (existing) {
-        throw new ConflictException('Discount with this code already exists');
+    try {
+      if (createDiscountDto.code) {
+        const existing = await this.discountRepository.findByCode(createDiscountDto.code);
+        if (existing) {
+          throw new DiscountValidationException('Discount with this code already exists', {
+            field: 'code',
+            value: createDiscountDto.code,
+          });
+        }
       }
+
+      const startDate = new Date(createDiscountDto.startDate);
+      const endDate = new Date(createDiscountDto.endDate);
+
+      if (startDate >= endDate) {
+        throw new DiscountValidationException('End date must be after start date', {
+          startDate,
+          endDate,
+        });
+      }
+
+      return await this.discountRepository.create({
+        ...createDiscountDto,
+        code: createDiscountDto.code?.toUpperCase(),
+        startDate,
+        endDate,
+      });
+    } catch (error) {
+      if (error instanceof DiscountValidationException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to create discount', ErrorCode.DB_004, {
+        operation: 'create',
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-
-    const startDate = new Date(createDiscountDto.startDate);
-    const endDate = new Date(createDiscountDto.endDate);
-
-    if (startDate >= endDate) {
-      throw new BadRequestException('End date must be after start date');
-    }
-
-    return this.discountRepository.create({
-      ...createDiscountDto,
-      code: createDiscountDto.code?.toUpperCase(),
-      startDate,
-      endDate,
-    });
   }
 
   async findAll(
@@ -76,53 +94,113 @@ export class DiscountsService {
   }
 
   async findOne(id: string): Promise<Discount> {
-    const discount = await this.discountRepository.findById(id);
-    if (!discount) {
-      throw new NotFoundException(`Discount with ID ${id} not found`);
+    try {
+      const discount = await this.discountRepository.findById(id);
+      if (!discount) {
+        throw new DiscountNotFoundException(id);
+      }
+      return discount;
+    } catch (error) {
+      if (error instanceof DiscountNotFoundException) {
+        throw error;
+      }
+      // Handle CastError (invalid ObjectId format) as DiscountNotFoundException
+      if (
+        error instanceof Error &&
+        (error.name === 'CastError' || error.message?.includes('Cast to ObjectId'))
+      ) {
+        throw new DiscountNotFoundException(id);
+      }
+      throw new DatabaseException('Failed to find discount', ErrorCode.DB_004, {
+        discountId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-    return discount;
   }
 
   async findByCode(code: string): Promise<Discount> {
-    const discount = await this.discountRepository.findByCode(code);
-    if (!discount) {
-      throw new NotFoundException(`Discount with code ${code} not found`);
+    try {
+      const discount = await this.discountRepository.findByCode(code);
+      if (!discount) {
+        throw new DiscountNotFoundException();
+      }
+      return discount;
+    } catch (error) {
+      if (error instanceof DiscountNotFoundException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to find discount by code', ErrorCode.DB_004, {
+        code,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-    return discount;
   }
 
   async update(id: string, updateDiscountDto: UpdateDiscountDto): Promise<Discount> {
-    const _discount = await this.findOne(id);
+    try {
+      await this.findOne(id);
 
-    if (updateDiscountDto.code) {
-      const existing = await this.discountRepository.findByCode(updateDiscountDto.code);
-      if (existing && existing.id !== id) {
-        throw new ConflictException('Discount with this code already exists');
+      if (updateDiscountDto.code) {
+        const existing = await this.discountRepository.findByCode(updateDiscountDto.code);
+        if (existing && existing.id !== id) {
+          throw new DiscountValidationException('Discount with this code already exists', {
+            field: 'code',
+            value: updateDiscountDto.code,
+          });
+        }
+        updateDiscountDto.code = updateDiscountDto.code.toUpperCase();
       }
-      updateDiscountDto.code = updateDiscountDto.code.toUpperCase();
-    }
 
-    if (updateDiscountDto.startDate && updateDiscountDto.endDate) {
-      const startDate = new Date(updateDiscountDto.startDate);
-      const endDate = new Date(updateDiscountDto.endDate);
-      if (startDate >= endDate) {
-        throw new BadRequestException('End date must be after start date');
+      if (updateDiscountDto.startDate && updateDiscountDto.endDate) {
+        const startDate = new Date(updateDiscountDto.startDate);
+        const endDate = new Date(updateDiscountDto.endDate);
+        if (startDate >= endDate) {
+          throw new DiscountValidationException('End date must be after start date', {
+            startDate,
+            endDate,
+          });
+        }
       }
-    }
 
-    const updated = await this.discountRepository.update(id, updateDiscountDto as never);
-    if (!updated) {
-      throw new BadRequestException('Failed to update discount');
-    }
+      const updated = await this.discountRepository.update(id, updateDiscountDto as never);
+      if (!updated) {
+        throw new DiscountOperationException('update', { discountId: id });
+      }
 
-    return updated;
+      return updated;
+    } catch (error) {
+      if (
+        error instanceof DiscountNotFoundException ||
+        error instanceof DiscountValidationException ||
+        error instanceof DiscountOperationException
+      ) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to update discount', ErrorCode.DB_004, {
+        discountId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   async remove(id: string): Promise<void> {
-    await this.findOne(id);
-    const deleted = await this.discountRepository.delete(id);
-    if (!deleted) {
-      throw new BadRequestException('Failed to delete discount');
+    try {
+      await this.findOne(id);
+      const deleted = await this.discountRepository.delete(id);
+      if (!deleted) {
+        throw new DiscountOperationException('delete', { discountId: id });
+      }
+    } catch (error) {
+      if (
+        error instanceof DiscountNotFoundException ||
+        error instanceof DiscountOperationException
+      ) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to delete discount', ErrorCode.DB_004, {
+        discountId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -137,12 +215,23 @@ export class DiscountsService {
   }
 
   async unlinkFromProduct(productId: string, discountId: string): Promise<void> {
-    const unlinked = await this.productDiscountRepository.unlinkProductFromDiscount(
-      productId,
-      discountId,
-    );
-    if (!unlinked) {
-      throw new NotFoundException('Product-Discount link not found');
+    try {
+      const unlinked = await this.productDiscountRepository.unlinkProductFromDiscount(
+        productId,
+        discountId,
+      );
+      if (!unlinked) {
+        throw new DiscountNotFoundException();
+      }
+    } catch (error) {
+      if (error instanceof DiscountNotFoundException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to unlink discount from product', ErrorCode.DB_004, {
+        productId,
+        discountId,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
