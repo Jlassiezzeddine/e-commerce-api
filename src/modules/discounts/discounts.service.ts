@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import type { PaginatedResponseDto } from '../../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import { DatabaseException } from '../../common/exceptions/database.exception';
 import { ErrorCode } from '../../common/exceptions/error-codes.enum';
-import type { DiscountRepository } from '../../database/repositories/discount.repository';
-import type { ProductDiscountRepository } from '../../database/repositories/product-discount.repository';
-import type { Discount } from '../../database/schemas/discount.schema';
-import type { CreateDiscountDto } from './dto/create-discount.dto';
-import type { DiscountResponseDto } from './dto/discount-response.dto';
-import type { LinkDiscountDto } from './dto/link-discount.dto';
-import type { UpdateDiscountDto } from './dto/update-discount.dto';
+import { DiscountRepository } from '../../database/repositories/discount.repository';
+import { ProductDiscountRepository } from '../../database/repositories/product-discount.repository';
+import { Discount } from '../../database/schemas/discount.schema';
+import { CreateDiscountDto } from './dto/create-discount.dto';
+import { DiscountResponseDto } from './dto/discount-response.dto';
+import { LinkDiscountDto } from './dto/link-discount.dto';
+import { UpdateDiscountDto } from './dto/update-discount.dto';
 import {
   DiscountNotFoundException,
   DiscountOperationException,

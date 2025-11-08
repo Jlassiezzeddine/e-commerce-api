@@ -1,5 +1,5 @@
-import type { ClientSession, FilterQuery, Model, UpdateQuery } from 'mongoose';
-import type { BaseRepositoryInterface } from '../interfaces/base-repository.interface';
+import { ClientSession, FilterQuery, Model, UpdateQuery } from 'mongoose';
+import { BaseRepositoryInterface } from '../interfaces/base-repository.interface';
 
 export abstract class BaseRepository<T> implements BaseRepositoryInterface<T> {
   constructor(protected readonly model: Model<T>) {}

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { PasswordResetRepository } from '../../../database/repositories/password-reset.repository';
-import type { TokenBlacklistRepository } from '../../../database/repositories/token-blacklist.repository';
-import type { PasswordReset } from '../../../database/schemas/password-reset.schema';
-import type { IAuthRepository } from './auth.repository.interface';
+import { PasswordResetRepository } from '../../../database/repositories/password-reset.repository';
+import { TokenBlacklistRepository } from '../../../database/repositories/token-blacklist.repository';
+import { PasswordReset } from '../../../database/schemas/password-reset.schema';
+import { IAuthRepository } from './auth.repository.interface';
 
 @Injectable()
 export class AuthRepository implements IAuthRepository {

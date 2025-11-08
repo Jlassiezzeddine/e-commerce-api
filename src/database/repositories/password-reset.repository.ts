@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import type { Model } from 'mongoose';
-import type { PasswordReset } from '../schemas/password-reset.schema';
+import { Model } from 'mongoose';
+import { PasswordReset } from '../schemas/password-reset.schema';
 import { BaseRepository } from './base.repository';
 
 @Injectable()

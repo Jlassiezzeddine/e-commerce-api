@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import type { Schema as MongooseSchema } from 'mongoose';
-import type { PaginatedResponseDto } from '../../common/dto/pagination.dto';
+import { Schema as MongooseSchema } from 'mongoose';
+import { PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import { DatabaseException } from '../../common/exceptions/database.exception';
 import { ErrorCode } from '../../common/exceptions/error-codes.enum';
-import type { DiscountRepository } from '../../database/repositories/discount.repository';
-import type { ProductRepository } from '../../database/repositories/product.repository';
-import type { ProductDiscountRepository } from '../../database/repositories/product-discount.repository';
+import { DiscountRepository } from '../../database/repositories/discount.repository';
+import { ProductRepository } from '../../database/repositories/product.repository';
+import { ProductDiscountRepository } from '../../database/repositories/product-discount.repository';
 import { DiscountType } from '../../database/schemas/discount.schema';
-import type { Product } from '../../database/schemas/product.schema';
-import type { CreateProductDto } from './dto/create-product.dto';
-import type { ProductResponseDto } from './dto/product-response.dto';
-import type { UpdateProductDto } from './dto/update-product.dto';
+import { Product } from '../../database/schemas/product.schema';
+import { CreateProductDto } from './dto/create-product.dto';
+import { ProductResponseDto } from './dto/product-response.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 import {
   ProductConflictException,
   ProductNotFoundException,

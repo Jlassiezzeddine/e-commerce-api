@@ -24,7 +24,8 @@
         "noExcessiveCognitiveComplexity": "warn"
       },
       "style": {
-        "useNodejsImportProtocol": "error"
+        "useNodejsImportProtocol": "error",
+        "useImportType": "off"
       },
       "suspicious": {
         "noExplicitAny": "warn"

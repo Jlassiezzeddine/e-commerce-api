@@ -1,5 +1,5 @@
 import { HttpException, type HttpStatus } from '@nestjs/common';
-import type { ErrorCode } from './error-codes.enum';
+import { ErrorCode } from './error-codes.enum';
 
 export interface ExceptionContext {
   [key: string]: unknown;

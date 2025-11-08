@@ -1,4 +1,4 @@
-import type { ClientSession, FilterQuery, UpdateQuery } from 'mongoose';
+import { ClientSession, FilterQuery, UpdateQuery } from 'mongoose';
 
 export interface BaseRepositoryInterface<T> {
   create(data: Partial<T>, session?: ClientSession): Promise<T>;

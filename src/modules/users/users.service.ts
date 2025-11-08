@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import type { PaginatedResponseDto } from '../../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import { DatabaseException } from '../../common/exceptions/database.exception';
 import { ErrorCode } from '../../common/exceptions/error-codes.enum';
-import type { UserRepository } from '../../database/repositories/user.repository';
-import type { User } from '../../database/schemas/user.schema';
-import type { CreateUserDto } from './dto/create-user.dto';
-import type { UpdateUserDto } from './dto/update-user.dto';
-import type { UserResponseDto } from './dto/user-response.dto';
+import { UserRepository } from '../../database/repositories/user.repository';
+import { User } from '../../database/schemas/user.schema';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 import {
   UserConflictException,
   UserNotFoundException,

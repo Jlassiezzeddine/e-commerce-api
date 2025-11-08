@@ -1,4 +1,4 @@
-import type { PasswordReset } from '@database/schemas/password-reset.schema';
+import { PasswordReset } from '@database/schemas/password-reset.schema';
 
 export interface IAuthRepository {
   blacklistToken(token: string, userId: string, expiresAt: Date, reason?: string): Promise<void>;

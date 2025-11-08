@@ -1,6 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 import { BaseException, type ExceptionContext } from './base.exception';
-import type { ErrorCode } from './error-codes.enum';
+import { ErrorCode } from './error-codes.enum';
 
 /**
  * Database exception

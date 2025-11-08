@@ -13,15 +13,15 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
-import type { PaginationDto } from '../../common/dto/pagination.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { UserRole } from '../../database/schemas/user.schema';
-import type { DiscountsService } from './discounts.service';
-import type { CreateDiscountDto } from './dto/create-discount.dto';
+import { DiscountsService } from './discounts.service';
+import { CreateDiscountDto } from './dto/create-discount.dto';
 import { DiscountResponseDto } from './dto/discount-response.dto';
-import type { LinkDiscountDto } from './dto/link-discount.dto';
-import type { UpdateDiscountDto } from './dto/update-discount.dto';
+import { LinkDiscountDto } from './dto/link-discount.dto';
+import { UpdateDiscountDto } from './dto/update-discount.dto';
 
 @ApiTags('discounts')
 @ApiBearerAuth()

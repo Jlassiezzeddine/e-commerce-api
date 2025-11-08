@@ -13,12 +13,12 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { Request as ExpressRequest, Response } from 'express';
+import { Request as ExpressRequest, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import type { UsersService } from '../users/users.service';
-import type { AuthService, SocialLoginResponse } from './auth.service';
+import { UsersService } from '../users/users.service';
+import { AuthService, SocialLoginResponse } from './auth.service';
 import { AdminOnly } from './decorators/auth.decorators';
 import {
   AuthResponseDto,
@@ -26,8 +26,8 @@ import {
   type RefreshTokenDto,
   type RegisterDto,
 } from './dto/auth.dto';
-import type { SendVerificationEmailDto, VerifyEmailDto } from './dto/email-verification.dto';
-import type {
+import { SendVerificationEmailDto, VerifyEmailDto } from './dto/email-verification.dto';
+import {
   OtpVerificationFailureDto,
   OtpVerificationSuccessDto,
   PasswordResetResponseDto,
@@ -37,7 +37,7 @@ import type {
   VerifyOtpDto,
 } from './dto/password-reset.dto';
 import { RolesGuard } from './guards/roles.guard';
-import type { TokenCleanupService } from './services/token-cleanup/token-cleanup.service';
+import { TokenCleanupService } from './services/token-cleanup/token-cleanup.service';
 
 @ApiTags('auth')
 @Controller('auth')

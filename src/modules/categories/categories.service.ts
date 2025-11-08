@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import type { PaginatedResponseDto } from '../../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../../common/dto/pagination.dto';
 import { DatabaseException } from '../../common/exceptions/database.exception';
 import { ErrorCode } from '../../common/exceptions/error-codes.enum';
-import type { CategoryRepository } from '../../database/repositories/category.repository';
-import type { Category } from '../../database/schemas/category.schema';
-import type { CategoryResponseDto } from './dto/category-response.dto';
-import type { CreateCategoryDto } from './dto/create-category.dto';
-import type { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoryRepository } from '../../database/repositories/category.repository';
+import { Category } from '../../database/schemas/category.schema';
+import { CategoryResponseDto } from './dto/category-response.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 import {
   CategoryConflictException,
   CategoryNotFoundException,

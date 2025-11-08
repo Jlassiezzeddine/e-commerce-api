@@ -1,4 +1,4 @@
-import type { Document } from 'mongoose';
+import { Document } from 'mongoose';
 
 /**
  * Safely extract string ID from a Mongoose document

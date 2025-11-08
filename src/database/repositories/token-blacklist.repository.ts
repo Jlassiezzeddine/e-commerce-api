@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import type { Model } from 'mongoose';
-import type { TokenBlacklist } from '../schemas/token-blacklist.schema';
+import { Model } from 'mongoose';
+import { TokenBlacklist } from '../schemas/token-blacklist.schema';
 import { BaseRepository } from './base.repository';
 
 @Injectable()
