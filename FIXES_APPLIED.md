@@ -13,38 +13,38 @@ When Biome auto-formatted the code, it converted regular imports to TypeScript `
 
 ### Services & Providers (Dependency Injection)
 1. **src/modules/users/users.service.ts**
-   - Changed: `import type { ConfigService }` → `import { ConfigService }`
-   - Changed: `import type { UserRepository }` → `import { UserRepository }`
+   - Changed: `import { ConfigService }` → `import { ConfigService }`
+   - Changed: `import { UserRepository }` → `import { UserRepository }`
 
 2. **src/modules/auth/auth.service.ts**
-   - Changed: `import type { ConfigService }` → `import { ConfigService }`
-   - Changed: `import type { JwtService }` → `import { JwtService }`
-   - Changed: `import type { UserRepository }` → `import { UserRepository }`
-   - Changed: `import type { UsersService }` → `import { UsersService }`
+   - Changed: `import { ConfigService }` → `import { ConfigService }`
+   - Changed: `import { JwtService }` → `import { JwtService }`
+   - Changed: `import { UserRepository }` → `import { UserRepository }`
+   - Changed: `import { UsersService }` → `import { UsersService }`
 
 3. **src/modules/products/products.service.ts**
-   - Changed: `import type { ProductRepository }` → `import { ProductRepository }`
-   - Changed: `import type { DiscountRepository }` → `import { DiscountRepository }`
-   - Changed: `import type { ProductDiscountRepository }` → `import { ProductDiscountRepository }`
+   - Changed: `import { ProductRepository }` → `import { ProductRepository }`
+   - Changed: `import { DiscountRepository }` → `import { DiscountRepository }`
+   - Changed: `import { ProductDiscountRepository }` → `import { ProductDiscountRepository }`
 
 4. **src/modules/discounts/discounts.service.ts**
-   - Changed: `import type { DiscountRepository }` → `import { DiscountRepository }`
-   - Changed: `import type { ProductDiscountRepository }` → `import { ProductDiscountRepository }`
+   - Changed: `import { DiscountRepository }` → `import { DiscountRepository }`
+   - Changed: `import { ProductDiscountRepository }` → `import { ProductDiscountRepository }`
 
 ### Strategies (Passport)
 5. **src/modules/auth/strategies/jwt.strategy.ts**
-   - Changed: `import type { ConfigService }` → `import { ConfigService }`
-   - Changed: `import type { UsersService }` → `import { UsersService }`
+   - Changed: `import { ConfigService }` → `import { ConfigService }`
+   - Changed: `import { UsersService }` → `import { UsersService }`
 
 6. **src/modules/auth/strategies/jwt-refresh.strategy.ts**
-   - Changed: `import type { ConfigService }` → `import { ConfigService }`
+   - Changed: `import { ConfigService }` → `import { ConfigService }`
 
 ### Guards (NestJS Guards)
 7. **src/common/guards/jwt-auth.guard.ts**
-   - Changed: `import type { Reflector }` → `import { Reflector }`
+   - Changed: `import { Reflector }` → `import { Reflector }`
 
 8. **src/common/guards/roles.guard.ts**
-   - Changed: `import type { Reflector }` → `import { Reflector }`
+   - Changed: `import { Reflector }` → `import { Reflector }`
 
 ## Rule for Type Imports
 

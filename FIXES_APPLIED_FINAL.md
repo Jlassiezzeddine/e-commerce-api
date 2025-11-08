@@ -56,9 +56,9 @@ Changed from `type` imports to regular imports for all DTOs used in `@Body()` de
 
 ```typescript
 // Before (WRONG)
-import type { RegisterDto } from './dto/register.dto';
-import type { CreateUserDto } from './dto/create-user.dto';
-import type { PaginationDto } from '../../common/dto/pagination.dto';
+import { RegisterDto } from './dto/register.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 // After (CORRECT)
 import { RegisterDto } from './dto/register.dto';
