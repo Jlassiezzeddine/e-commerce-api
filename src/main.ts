@@ -61,7 +61,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = configService.get<number>('app.port') || 3000;
+  // Render provides PORT environment variable, prioritize it
+  const port = process.env.PORT
+    ? Number.parseInt(process.env.PORT, 10)
+    : configService.get<number>('app.port') || 3000;
   await app.listen(port);
 
   console.log(`🚀 Application is running on: http://localhost:${port}/${apiPrefix}`);
