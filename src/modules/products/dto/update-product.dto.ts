@@ -42,11 +42,6 @@ export class UpdateProductDto {
   @IsOptional()
   images?: string[];
 
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean;
-
   @ApiPropertyOptional({ example: { brand: 'Sony', warranty: '2 years' } })
   @IsOptional()
   metadata?: Record<string, unknown>;

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -18,6 +19,6 @@ import { UsersModule } from './modules/users/users.module';
     CategoriesModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [HttpExceptionFilter],
 })
 export class AppModule {}

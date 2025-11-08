@@ -1,35 +1,49 @@
+import { Injectable } from '@nestjs/common';
+import type { PaginatedResponseDto } from '../../common/dto/pagination.dto';
+import { DatabaseException } from '../../common/exceptions/database.exception';
+import { ErrorCode } from '../../common/exceptions/error-codes.enum';
+import type { CategoryRepository } from '../../database/repositories/category.repository';
+import type { Category } from '../../database/schemas/category.schema';
+import type { CategoryResponseDto } from './dto/category-response.dto';
+import type { CreateCategoryDto } from './dto/create-category.dto';
+import type { UpdateCategoryDto } from './dto/update-category.dto';
 import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { PaginatedResponseDto } from '../../common/dto/pagination.dto';
-import { CategoryRepository } from '../../database/repositories/category.repository';
-import { Category } from '../../database/schemas/category.schema';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { CategoryResponseDto } from './dto/category-response.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+  CategoryConflictException,
+  CategoryNotFoundException,
+  CategoryOperationException,
+} from './exceptions/category.exceptions';
 
 @Injectable()
 export class CategoriesService {
   constructor(private readonly categoryRepository: CategoryRepository) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
-    const existingByName = await this.categoryRepository.findOne({ name: createCategoryDto.name });
-    if (existingByName) {
-      throw new ConflictException('Category with this name already exists');
-    }
+    try {
+      const existingByName = await this.categoryRepository.findOne({
+        name: createCategoryDto.name,
+      });
+      if (existingByName) {
+        throw new CategoryConflictException('name', createCategoryDto.name);
+      }
 
-    const existingBySlug = await this.categoryRepository.findBySlug(createCategoryDto.slug);
-    if (existingBySlug) {
-      throw new ConflictException('Category with this slug already exists');
-    }
+      const existingBySlug = await this.categoryRepository.findBySlug(createCategoryDto.slug);
+      if (existingBySlug) {
+        throw new CategoryConflictException('slug', createCategoryDto.slug);
+      }
 
-    return this.categoryRepository.create({
-      ...createCategoryDto,
-      slug: createCategoryDto.slug.toLowerCase(),
-    });
+      return await this.categoryRepository.create({
+        ...createCategoryDto,
+        slug: createCategoryDto.slug.toLowerCase(),
+      });
+    } catch (error) {
+      if (error instanceof CategoryConflictException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to create category', ErrorCode.DB_004, {
+        operation: 'create',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   async findAll(
@@ -65,55 +79,111 @@ export class CategoriesService {
   }
 
   async findOne(id: string): Promise<Category> {
-    const category = await this.categoryRepository.findById(id);
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
+    try {
+      const category = await this.categoryRepository.findById(id);
+      if (!category) {
+        throw new CategoryNotFoundException(id, 'id');
+      }
+      return category;
+    } catch (error) {
+      if (error instanceof CategoryNotFoundException) {
+        throw error;
+      }
+      // Handle CastError (invalid ObjectId format) as CategoryNotFoundException
+      if (
+        error instanceof Error &&
+        (error.name === 'CastError' || error.message?.includes('Cast to ObjectId'))
+      ) {
+        throw new CategoryNotFoundException(id, 'id');
+      }
+      throw new DatabaseException('Failed to find category', ErrorCode.DB_004, {
+        categoryId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-    return category;
   }
 
   async findBySlug(slug: string): Promise<Category> {
-    const category = await this.categoryRepository.findBySlug(slug);
-    if (!category) {
-      throw new NotFoundException(`Category with slug ${slug} not found`);
+    try {
+      const category = await this.categoryRepository.findBySlug(slug);
+      if (!category) {
+        throw new CategoryNotFoundException(slug, 'slug');
+      }
+      return category;
+    } catch (error) {
+      if (error instanceof CategoryNotFoundException) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to find category by slug', ErrorCode.DB_004, {
+        slug,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
-    return category;
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
-    await this.findOne(id); // Verify category exists
+    try {
+      await this.findOne(id); // Verify category exists
 
-    // Check for conflicts if name or slug is being updated
-    if (updateCategoryDto.name) {
-      const existingByName = await this.categoryRepository.findOne({ name: updateCategoryDto.name });
-      const existingId = existingByName?.id || existingByName?._id?.toString();
-      if (existingByName && existingId !== id) {
-        throw new ConflictException('Category with this name already exists');
+      // Check for conflicts if name or slug is being updated
+      if (updateCategoryDto.name) {
+        const existingByName = await this.categoryRepository.findOne({
+          name: updateCategoryDto.name,
+        });
+        const existingId = existingByName?.id || existingByName?._id?.toString();
+        if (existingByName && existingId !== id) {
+          throw new CategoryConflictException('name', updateCategoryDto.name);
+        }
       }
-    }
 
-    if (updateCategoryDto.slug) {
-      const existingBySlug = await this.categoryRepository.findBySlug(updateCategoryDto.slug);
-      const existingId = existingBySlug?.id || existingBySlug?._id?.toString();
-      if (existingBySlug && existingId !== id) {
-        throw new ConflictException('Category with this slug already exists');
+      if (updateCategoryDto.slug) {
+        const existingBySlug = await this.categoryRepository.findBySlug(updateCategoryDto.slug);
+        const existingId = existingBySlug?.id || existingBySlug?._id?.toString();
+        if (existingBySlug && existingId !== id) {
+          throw new CategoryConflictException('slug', updateCategoryDto.slug);
+        }
+        updateCategoryDto.slug = updateCategoryDto.slug.toLowerCase();
       }
-      updateCategoryDto.slug = updateCategoryDto.slug.toLowerCase();
-    }
 
-    const updated = await this.categoryRepository.update(id, updateCategoryDto);
-    if (!updated) {
-      throw new BadRequestException('Failed to update category');
-    }
+      const updated = await this.categoryRepository.update(id, updateCategoryDto);
+      if (!updated) {
+        throw new CategoryOperationException('update', { categoryId: id });
+      }
 
-    return updated;
+      return updated;
+    } catch (error) {
+      if (
+        error instanceof CategoryNotFoundException ||
+        error instanceof CategoryConflictException ||
+        error instanceof CategoryOperationException
+      ) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to update category', ErrorCode.DB_004, {
+        categoryId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   async remove(id: string): Promise<void> {
-    await this.findOne(id); // Verify category exists
-    const deleted = await this.categoryRepository.delete(id);
-    if (!deleted) {
-      throw new BadRequestException('Failed to delete category');
+    try {
+      await this.findOne(id); // Verify category exists
+      const deleted = await this.categoryRepository.delete(id);
+      if (!deleted) {
+        throw new CategoryOperationException('delete', { categoryId: id });
+      }
+    } catch (error) {
+      if (
+        error instanceof CategoryNotFoundException ||
+        error instanceof CategoryOperationException
+      ) {
+        throw error;
+      }
+      throw new DatabaseException('Failed to delete category', ErrorCode.DB_004, {
+        categoryId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -129,4 +199,3 @@ export class CategoriesService {
     };
   }
 }
-
