@@ -8,7 +8,7 @@ import { CategoriesService } from './categories.service';
 @Module({
   imports: [MongooseModule.forFeature([{ name: 'Category', schema: CategorySchema }])],
   controllers: [CategoriesController],
-  providers: [CategoriesService, CategoryRepository],
-  exports: [CategoriesService, CategoryRepository],
+  providers: [CategoryRepository, CategoriesService],
+  exports: [CategoryRepository, CategoriesService],
 })
 export class CategoriesModule {}
