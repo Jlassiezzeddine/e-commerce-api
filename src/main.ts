@@ -6,6 +6,7 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +22,10 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Request ID middleware (must be registered before other middleware)
+  const requestIdMiddleware = new RequestIdMiddleware();
+  app.use((req, res, next) => requestIdMiddleware.use(req, res, next));
+
   // Global pipes
   app.useGlobalPipes(
     new ValidationPipe({
@@ -33,8 +38,9 @@ async function bootstrap() {
     }),
   );
 
-  // Global filters
-  app.useGlobalFilters(new HttpExceptionFilter());
+  // Global filters (inject ConfigService)
+  const httpExceptionFilter = app.get(HttpExceptionFilter);
+  app.useGlobalFilters(httpExceptionFilter);
 
   // Global interceptors
   app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());

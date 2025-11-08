@@ -20,7 +20,7 @@ import { UserRole } from '../../database/schemas/user.schema';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import { UsersService } from './users.service';
+import type { UsersService } from './users.service';
 
 @ApiTags('users')
 @ApiBearerAuth()

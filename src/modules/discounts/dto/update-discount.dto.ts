@@ -47,11 +47,6 @@ export class UpdateDiscountDto {
   @IsOptional()
   endDate?: string;
 
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean;
-
   @ApiPropertyOptional({ example: 100 })
   @IsNumber()
   @Min(0)

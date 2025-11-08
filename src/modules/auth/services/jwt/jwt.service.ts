@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService as NestJwtService } from '@nestjs/jwt';
+import type { ConfigService } from '@nestjs/config';
+import type { JwtService as NestJwtService } from '@nestjs/jwt';
 import type { TokenPayloadDto } from '../../dto/auth.dto';
 import { InvalidTokenException, TokenExpiredException } from '../../exceptions/auth.exceptions';
 
